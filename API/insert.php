@@ -4,7 +4,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require __DIR__.'/../AuthMiddleware.php';
+
 
 include('../CONFI/connection.php');
 
@@ -20,12 +20,11 @@ header("Access-Control-Allow-Methods: POST");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-with");
 
-
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case "POST":
         $user = json_decode(file_get_contents('php://input'));
-
+        
        
         if ($user === null) {
             
@@ -41,22 +40,25 @@ switch ($method) {
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
         }
-
-        $auth = new Auth($conn, getallheaders());
+// -----------------------------------------
 
    
 // ---------------------------------------------
+$userId = $user->userId;
         // Insert the property data into the 'property' table
-        $property_sql = "INSERT INTO property ( type, title, date, beds, bathrooms, parking, floors, floorNumber, size, price, description, address, city, area, electricity, gas, water, features) 
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $property_sql = "INSERT INTO property ( user_id,type, title, date, beds, bathrooms, parking, floors, floorNumber, size, price, description, address, city, area, electricity, gas, water, features) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $property_stmt = $conn->prepare($property_sql);
        
         if (!$property_stmt) {
             echo $conn->error;
             exit;
         }
-        $user_id = $auth->isValid()['user']['id'];
-        $property_stmt->bind_param("sssiiiisiissssiiis",$user->type, $user->title, $user->date, $user->beds, $user->bathrooms, $user->parking, $user->floors, $user->floorNumber, $user->size, $user->price, $user->description, $user->address, $user->city, $user->area, $user->electricity, $user->gas, $user->water, $user->features);
+       
+       
+        
+
+        $property_stmt->bind_param("isssiiiisiissssiiis",$userId, $user->type, $user->title, $user->date, $user->beds, $user->bathrooms, $user->parking, $user->floors, $user->floorNumber, $user->size, $user->price, $user->description, $user->address, $user->city, $user->area, $user->electricity, $user->gas, $user->water, $user->features);
 
         if (!$property_stmt->execute()) {
             $response = ['status' => 0, 'message' => 'Failed to create record: ' . $property_stmt->error];
@@ -66,9 +68,7 @@ switch ($method) {
 
       
         try {
-            // Insert the property data into the 'property' table
-            // ...
-        
+           
             // Get the ID of the last inserted property
             $property_id = $conn->insert_id;
 

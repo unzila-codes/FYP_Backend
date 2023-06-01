@@ -15,16 +15,17 @@ class User {
     }
 
     public function registerUser($cnic, $name, $email, $password) {
-        $stmt = $this->conn->prepare("SELECT * FROM demo_user WHERE CNIC = ? OR EMAIL = ?");
+        $stmt = $this->conn->prepare("SELECT * FROM demo_user WHERE cnic = ? OR email = ?");
         $stmt->bind_param("ss", $cnic, $email);
         $stmt->execute();
 
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
             echo json_encode(['message' => 'Email Or CNIC Already Registered']);
+            exit; // Terminate the script execution after sending the response
         } else {
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-            $insert_query = "INSERT INTO demo_user (CNIC, NAME, EMAIL, PASSWORD) VALUES (?, ?, ?, ?)";
+            $insert_query = "INSERT INTO demo_user (cnic, name, email, password) VALUES (?, ?, ?, ?)";
             $stmt = $this->conn->prepare($insert_query);
             $stmt->bind_param("ssss", $cnic, $name, $email, $hashed_password);
             $result = $stmt->execute();
@@ -34,11 +35,13 @@ class User {
                     'status' => 'valid'
                 );
                 echo json_encode($response);
+                exit; // Terminate the script execution after sending the response
             } else {
                 $response['data'] = array(
                     'status' => 'invalid'
                 );
                 echo json_encode($response);
+                exit; // Terminate the script execution after sending the response
             }
         }
     }
@@ -54,5 +57,9 @@ if (isset($data)) {
     $password = $data->password;
 
     $user->registerUser($id, $name, $email, $password);
+}
+else {
+    echo json_encode(['status' => 'error', 'message' => 'Incomplete registration data']);
+    exit; // Terminate the script execution after sending the response
 }
 ?>

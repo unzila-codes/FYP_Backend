@@ -5,6 +5,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
+$jwt = new JwtHandler();
 
 class JwtHandler
 {
@@ -46,13 +47,12 @@ class JwtHandler
         return $this->jwt;
     }
 
+    
     public function jwtDecodeData($jwt_token)
     {
         
         try {
-            
-            $decode = JWT::decode($jwt_token, $this->jwt_secrect, ['HS256']);
-
+            $decode = JWT::decode($jwt_token, new Key($this->jwt_secrect, 'HS256'));
             
             return [
                 "data" => $decode->data

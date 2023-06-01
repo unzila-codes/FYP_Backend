@@ -8,6 +8,8 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 require __DIR__.'/CONFI/connection.php';
 require __DIR__.'/AuthMiddleware.php';
 
+
+
 try {
     $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -16,29 +18,17 @@ try {
     $allHeaders = getallheaders(); // Assuming you have a function to get the request headers
     $auth = new Auth($pdo, $allHeaders);
 
-    /// Call the isValid() method
-   //$authData = $auth->isValid();
-
-       // Call the isValid() method
-     // echo json_encode($auth->isValid());
-
-   // Call the getUser() method
-//    $result = $auth->getUser();
-//$result = $auth->fetchUser();
-  // echo json_encode($result);
-
-   
     // Call the isValid() method
-    $authData = $auth->isValid();
+    echo json_encode($auth->isValid());
 
-    // Call the getUser() method
-    $result = $auth->getUser();
-    echo json_encode($result);
+    
+
 
 } catch (PDOException $e) {
     echo "Database connection failed: " . $e->getMessage();
 }
 ?>
+
 
 
 

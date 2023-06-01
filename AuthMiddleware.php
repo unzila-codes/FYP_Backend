@@ -52,9 +52,9 @@ class Auth extends JwtHandler {
     
 
 
-    protected function fetchUser($user_id) {
+    public function fetchUser($user_id) {
         try {
-            $fetch_user_by_id = "SELECT `name`, `email` FROM `demo_user` WHERE `id`=:id";
+            $fetch_user_by_id = "SELECT `id`,`name`, `email` FROM `demo_user` WHERE `id`=:id";
             $query_stmt = $this->db->prepare($fetch_user_by_id);
             
             if ($query_stmt === false) {

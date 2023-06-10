@@ -13,51 +13,75 @@ class User {
         $this->conn = $conn;
     }
 
-    public function getUserProfile($token) {
-        $stmt = $this->conn->prepare("SELECT id, name, cnic, email FROM demo_user WHERE token = ?");
-       
+public function getUserProfile($token) {
+    $stmt = $this->conn->prepare("SELECT id, name, cnic, email FROM demo_user WHERE token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
 
-        $stmt->bind_param("s", $token);
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-        if ($result->num_rows === 1) {
-            $row = $result->fetch_assoc();
-            $profileData = array(
-                'id' => $row['id'],
-                'name' => $row['name'],
-                'cnic' => $row['cnic'],
-                'email' => $row['email']
-            );
-            
-            $bidStmt = $this->conn->prepare("SELECT b.bid_id,b.status, b.name, b.amount, p.title FROM bidding b JOIN property p ON b.property_id = p.id JOIN demo_user u ON u.id = p.user_id WHERE token = ?");
-            $bidStmt->bind_param("s", $token);
-            $bidStmt->execute();
-
-            $bidResult = $bidStmt->get_result();
-            if ($bidResult->num_rows >0) {
-                while ($bidRow = $bidResult->fetch_assoc()) {
-                    $biddingData[] = array(
-                        'bid_id ' => $bidRow['bid_id'],
-                        'status' => $bidRow['status'],
-                        'name' => $bidRow['name'],
-                        'amount' => $bidRow['amount'],
-                        'title' => $bidRow['title']
-                    );
-                }
-            }
-
-            $response['status'] = 'success';
-            $response['profile'] = $profileData;
-            $response['biddingData'] = $biddingData;
-            echo json_encode($response);
-            exit;
-        }
-
-        // Token not found or invalid
-        echo json_encode(['message' => 'Invalid token']);
-        exit;
+    $result = $stmt->get_result();
+    $profileData = null; // Initialize as null
+    
+    if ($result->num_rows === 1) {
+        $row = $result->fetch_assoc();
+        $profileData = array(
+            'id' => $row['id'],
+            'name' => $row['name'],
+            'cnic' => $row['cnic'],
+            'email' => $row['email']
+        );
     }
+
+    $bidStmt = $this->conn->prepare("SELECT b.bid_id,b.status, b.name, b.amount, p.title FROM bidding b JOIN property p ON b.property_id = p.id JOIN demo_user u ON u.id = p.user_id WHERE token = ?");
+    $bidStmt->bind_param("s", $token);
+    $bidStmt->execute();
+
+    $bidResult = $bidStmt->get_result();
+    $biddingData = array(); // Initialize an empty array
+    
+    if ($bidResult->num_rows > 0) {
+        while ($bidRow = $bidResult->fetch_assoc()) {
+            $biddingData[] = array(
+                'bid_id' => $bidRow['bid_id'],
+                'status' => $bidRow['status'],
+                'name' => $bidRow['name'],
+                'amount' => $bidRow['amount'],
+                'title' => $bidRow['title']
+            );
+        }
+    }
+
+    $tenStmt = $this->conn->prepare("SELECT b.status, b.amount, p.title FROM bidding b JOIN property p ON b.property_id = p.id JOIN demo_user u ON u.id = b.user_id WHERE token = ?");
+    $tenStmt->bind_param("s", $token);
+    $tenStmt->execute();
+
+    $tenResult = $tenStmt->get_result();
+    $tenData = array(); // Initialize an empty array
+    
+    if ($tenResult->num_rows > 0) {
+        while ($bidRow = $tenResult->fetch_assoc()) {
+            $tenData[] = array(
+                'status' => $bidRow['status'],
+                'amount' => $bidRow['amount'],
+                'title' => $bidRow['title']
+            );
+        }
+    }
+
+    $response = array();
+    if ($profileData !== null || !empty($biddingData) || !empty($tenData)) {
+        $response['status'] = 'success';
+        $response['profile'] = $profileData;
+        $response['biddingData'] = $biddingData;
+        $response['tenData'] = $tenData;
+    } else {
+        $response['status'] = 'error';
+        $response['message'] = 'No data found';
+    }
+
+    echo json_encode($response);
+    exit;
+}
+
 
     public function updateBidStatus($bidId, $status) {
         $stmt = $this->conn->prepare("UPDATE bidding SET status = ? WHERE bid_id  = ?");
